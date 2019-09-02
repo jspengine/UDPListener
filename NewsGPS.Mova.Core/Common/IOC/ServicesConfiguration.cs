@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NewsGPS.Mova.Core.Common.Gateway;
-
 using Serilog;
 using System;
 
@@ -9,6 +8,7 @@ namespace NewsGPS.Mova.Core.Common.IOC
 {
     public static class IOCConfiguration
     {
+       
         public static void AddServices(this IServiceCollection services)
         {
             services.AddTransient<IStartGateway, Gateway.Gateway>();
@@ -21,12 +21,9 @@ namespace NewsGPS.Mova.Core.Common.IOC
             return services.AddSingleton(Log.Logger);
         }
 
-        public static IServiceCollection AddSerilogServices(this IServiceCollection services)
+        public static IServiceCollection AddSerilogServices(this IServiceCollection services, IConfigurationRoot configuration)
         {
-            var configuration = new ConfigurationBuilder()
-                                .AddJsonFile("appsettings.json")
-                                .Build();
-
+            
             var configurationLog = new LoggerConfiguration()
                 .ReadFrom.Configuration(configuration);
 

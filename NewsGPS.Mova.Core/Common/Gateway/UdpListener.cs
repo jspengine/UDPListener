@@ -77,44 +77,44 @@ namespace NewsGPS.Mova.Core.Common.Gateway
                 {
 
                     bytes = _socket.EndReceiveFrom(ar, ref _endPointFrom);
+                    _socket.BeginReceiveFrom(so.buffer, 0, _bufferSize, SocketFlags.None, ref _endPointFrom, _packetReceivedCallback, so);
 
+                    message = Encoding.ASCII.GetString(so.buffer, 0, bytes);
+
+                    if (!string.IsNullOrWhiteSpace(message))
+                    {
+
+                        _logger.Information("********** RECEBI A MENSAGEM ***********");
+                        _logger.Information("{message}", message);
+
+                        var optionsToSend = new Options
+                        {
+                            IpAdrress = _endPointFrom.ToString().Split(':')[0],
+                            PortNumber = int.Parse(_endPointFrom.ToString().Split(':')[1]),
+                        };
+
+                        Task.Run(() =>
+                        {
+                            SendAck(optionsToSend, message);
+                        });
+
+                        Task.Run(() =>
+                        {
+                            Forward(message);
+                        });
+
+                        Task.Run(() =>
+                        {
+                            Process(message);
+                        });
+
+
+                    }
                 }
-                catch { }
-
-                _socket.BeginReceiveFrom(so.buffer, 0, _bufferSize, SocketFlags.None, ref _endPointFrom, _packetReceivedCallback, so);
-
-                message = Encoding.ASCII.GetString(so.buffer, 0, bytes);
-
-                if (!string.IsNullOrWhiteSpace(message))
+                catch
                 {
-
-                    _logger.Information("********** RECEBI A MENSAGEM ***********");
-                    _logger.Information("{message}", message);
-
-                    var optionsToSend = new Options
-                    {
-                        IpAdrress = _endPointFrom.ToString().Split(':')[0],
-                        PortNumber = int.Parse(_endPointFrom.ToString().Split(':')[1]),
-                    };
-
-                    Task.Run(() => 
-                    {
-                        SendAck(optionsToSend, message);
-                    });
-
-                    Task.Run(() =>
-                    {
-                        Forward(message);
-                    });
-
-                    Task.Run(() =>
-                    {
-                        Process(message);
-                    });
-
-                    
+                    _socket.BeginReceiveFrom(so.buffer, 0, _bufferSize, SocketFlags.None, ref _endPointFrom, _packetReceivedCallback, so);
                 }
-
             }, _state);
         }
 

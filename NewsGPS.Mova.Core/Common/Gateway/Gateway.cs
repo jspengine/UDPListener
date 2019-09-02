@@ -1,4 +1,6 @@
-﻿using Serilog;
+﻿using Microsoft.Extensions.Options;
+using NewsGPS.Mova.Core.Common.Gateway.Configuration;
+using Serilog;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -7,22 +9,27 @@ namespace NewsGPS.Mova.Core.Common.Gateway
     public class Gateway : IStartGateway
     {
         private ILogger _logger;
+        private IOptions<Listener> _listenersConfig;
+        private IOptions<FowardTo> _fowardToConfig;
 
-        public Gateway(ILogger logguer)
+        public Gateway(ILogger logguer, 
+            IOptions<Listener> listenersConfig,
+            IOptions<FowardTo> fowardToConfig)
         {
             _logger = logguer;
+            _listenersConfig = listenersConfig;
+            _fowardToConfig = fowardToConfig;
         }
 
         public void Run()
         {
-            var portsToListem = new int[1] { 9004 };
+            var listenersConfiguration = _listenersConfig.Value;
             var listeners = new List<MovaGateway>();
 
-            foreach (var port in portsToListem)
+            foreach (var port in listenersConfiguration.Ports)
             {
-                //127.0.0.1
-                //listeners.Add(new MovaGateway(_logger, "127.0.0.1", port));
-                listeners.Add(new MovaGateway(_logger, "192.168.1.151", port));
+                var ip = listenersConfiguration.IpAddress;
+                listeners.Add(new MovaGateway(_fowardToConfig, _logger, ip, port));
             }
 
 

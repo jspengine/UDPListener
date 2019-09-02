@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
     <ApplicationIcon />
     <StartupObject>NewsGPS.Mova.Processor.Program</StartupObject>
     <AssemblyName>NewsGPS.Mova.Processor</AssemblyName>
