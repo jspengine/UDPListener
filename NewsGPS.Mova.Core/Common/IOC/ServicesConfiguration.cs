@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NewsGPS.Mova.Core.Common.Gateway;
+using NewsGPS.Mova.Core.Common.Gateway.Configuration;
 using Serilog;
 using System;
 
@@ -29,6 +30,20 @@ namespace NewsGPS.Mova.Core.Common.IOC
 
             return services.AddSerilogServices(configurationLog);
         }
+
+        /// <summary>
+        /// Add configuration to inject on app
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="configuration"></param>
+        public static void AddConfiguration(this IServiceCollection services, IConfigurationRoot configuration)
+        {
+           
+            services.AddOptions();
+            services.Configure<Listener>(configuration.GetSection("Listener"));
+            services.Configure<FowardTo>(configuration.GetSection("FowardTo"));
+        }
+
 
     }
 }
