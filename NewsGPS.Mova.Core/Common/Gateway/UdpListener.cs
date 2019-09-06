@@ -10,12 +10,10 @@ namespace NewsGPS.Mova.Core.Common.Gateway
 {
     public abstract class UdpListener : IDisposable
     {
-
-
         private const int _bufferSize = 8 * 1024;
-        private Socket _socket;
+        protected Socket _socket;
         private State _state = new State();
-        private EndPoint _endPointFrom = new IPEndPoint(IPAddress.Any, 0);
+        protected EndPoint _endPointFrom = new IPEndPoint(IPAddress.Any, 0);
         private AsyncCallback _packetReceivedCallback = null;
 
         protected readonly ILogger _logger;
@@ -30,7 +28,7 @@ namespace NewsGPS.Mova.Core.Common.Gateway
 
         protected abstract void Process(string message);
 
-        protected abstract void SendAck(Options to, string message);
+        protected abstract void SendAck(string message);
 
         protected abstract void Forward(string message);
 
@@ -41,8 +39,8 @@ namespace NewsGPS.Mova.Core.Common.Gateway
             Port = port;
 
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            _socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.ReuseAddress, true);
-
+            //_socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.ReuseAddress, true);
+           
             //_socket.Ttl = 255;
             _socket.Bind(new IPEndPoint(IPAddress.Parse(ipAddrress), port));
 
@@ -57,11 +55,11 @@ namespace NewsGPS.Mova.Core.Common.Gateway
             if (!fowardTo.PortNumber.HasValue) throw new Exception("Configure o numero da porta UDP de encaminhamento de pacotes.");
 
             var messageBuffer = Encoding.ASCII.GetBytes(message);
+
+            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             var endPoint = new IPEndPoint(IPAddress.Parse(fowardTo.IpAdrress), fowardTo.PortNumber.Value);
-            _socket.SendTo(messageBuffer, endPoint);
 
-
-
+            socket.SendTo(messageBuffer, endPoint);
         }
 
 
@@ -77,42 +75,30 @@ namespace NewsGPS.Mova.Core.Common.Gateway
                 {
 
                     bytes = _socket.EndReceiveFrom(ar, ref _endPointFrom);
-                    _socket.BeginReceiveFrom(so.buffer, 0, _bufferSize, SocketFlags.None, ref _endPointFrom, _packetReceivedCallback, so);
-
+                   
                     message = Encoding.ASCII.GetString(so.buffer, 0, bytes);
 
                     if (!string.IsNullOrWhiteSpace(message))
                     {
+                        _logger.Information("MENSAGEM RECEBIDA: {message}", message);
 
-                        _logger.Information("********** RECEBI A MENSAGEM ***********");
-                        _logger.Information("{message}", message);
+                        SendAck(message);
 
-                        var optionsToSend = new Options
-                        {
-                            IpAdrress = _endPointFrom.ToString().Split(':')[0],
-                            PortNumber = int.Parse(_endPointFrom.ToString().Split(':')[1]),
-                        };
+                        Forward(message);
+                        _logger.Information("REENCAMINHANDO P/ MOVA: {message} ", message);
 
-                        Task.Run(() =>
-                        {
-                            SendAck(optionsToSend, message);
-                        });
-
-                        Task.Run(() =>
-                        {
-                            Forward(message);
-                        });
 
                         Task.Run(() =>
                         {
                             Process(message);
                         });
 
-
                     }
+                    _socket.BeginReceiveFrom(so.buffer, 0, _bufferSize, SocketFlags.None, ref _endPointFrom, _packetReceivedCallback, so);
                 }
-                catch
+                catch(Exception ex)
                 {
+                    _logger.Error(ex,"Ops algo ruim aconteceu.");
                     _socket.BeginReceiveFrom(so.buffer, 0, _bufferSize, SocketFlags.None, ref _endPointFrom, _packetReceivedCallback, so);
                 }
             }, _state);

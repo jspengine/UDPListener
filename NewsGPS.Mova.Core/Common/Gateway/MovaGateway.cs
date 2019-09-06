@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using NewsGPS.Mova.Core.Common.Gateway.Configuration;
 using NewsGPS.Mova.Core.Domain.Helpers;
 using Serilog;
+using System.Text;
 
 namespace NewsGPS.Mova.Core.Common.Gateway
 {
@@ -29,24 +30,19 @@ namespace NewsGPS.Mova.Core.Common.Gateway
                 PortNumber = _forwardToConfig.Value.Port
             };
 
-            var servidor = string.Format("{0}:{1}", sendTo.IpAdrress, sendTo.PortNumber);
-
+           
             this.SendTo(sendTo, message);
-
-            _logger.Information("****** Reencaminhado para MOVA no SERVIDOR {servidor} ******", servidor);
-            _logger.Information("{message} ", message);
-
 
         }
 
 
         protected override void Process(string message)
         {
-            _logger.Information("*** Enviando Mensagem para o SING ****");
-            _logger.Information("{message}", message);
+            //_logger.Information("*** Enviando Mensagem para o SING ****");
+            //_logger.Information("{message}", message);
         }
 
-        protected override void SendAck(Options to, string message)
+        protected override void SendAck(string message)
         {
            
             var messagesSplited = message.Split(';');
@@ -56,14 +52,14 @@ namespace NewsGPS.Mova.Core.Common.Gateway
 
             var ackMessage = string.Format(">ACK;{0};{1};", idEquipamento, numeroMessage);
             var ack = CheckSumHelper.Calculate(ackMessage);
-            var ackToSend = string.Format("{0}*{1}<\r\n", ackMessage, ack);
+            var ackToSend = string.Format("{0}*{1}<\n\r", ackMessage, ack);
 
-            //var m = string.Format("******* ACK enviado PARA {0}:{1} ******** ", to.IpAdrress, to.PortNumber);
+            _logger.Information("ACK: {ackToSend}", ackToSend);
 
-            _logger.Information("******* ACK enviado PARA {0}:{1} ******** ", to.IpAdrress, to.PortNumber);
-            _logger.Information("{ackToSend}", ackToSend);
+            var messageBuffer = Encoding.ASCII.GetBytes(ackToSend);
+            _socket.SendTo(messageBuffer, _endPointFrom);
 
-            this.SendTo(to, ackToSend);
+
         }
 
     }
