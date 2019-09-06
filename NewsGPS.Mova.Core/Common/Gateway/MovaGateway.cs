@@ -9,16 +9,19 @@ namespace NewsGPS.Mova.Core.Common.Gateway
 {
     sealed class MovaGateway : UdpListener
     {
-        private IOptions<FowardTo> _forwardToConfig;
+        private IOptions<FowardToMova> _forwardToMovaConfig;
+        private IOptions<FowardToSing> _fowardToSingConfig;
 
         public MovaGateway(
-            IOptions<FowardTo> fowardToConfig,
+            IOptions<FowardToMova> fowardToMovaConfig,
+            IOptions<FowardToSing> fowardToSingConfig,
             ILogger logguer,
             string ipAddrress, 
             int port) 
             : base(logguer, ipAddrress, port)
         {
-            _forwardToConfig = fowardToConfig;
+            _forwardToMovaConfig = fowardToMovaConfig;
+            _fowardToSingConfig = fowardToSingConfig;
         }
 
         protected override void Forward(string message)
@@ -26,8 +29,8 @@ namespace NewsGPS.Mova.Core.Common.Gateway
            
             var sendTo = new Options
             {
-                IpAdrress = _forwardToConfig.Value.IpAddress,
-                PortNumber = _forwardToConfig.Value.Port
+                IpAdrress = _forwardToMovaConfig.Value.IpAddress,
+                PortNumber = _forwardToMovaConfig.Value.Port
             };
 
            
@@ -38,8 +41,33 @@ namespace NewsGPS.Mova.Core.Common.Gateway
 
         protected override void Process(string message)
         {
-            //_logger.Information("*** Enviando Mensagem para o SING ****");
-            //_logger.Information("{message}", message);
+            
+            var rgpToFowardForSing = message.ToRGPProtocol();
+
+            if (!string.IsNullOrWhiteSpace(rgpToFowardForSing))
+            {
+                try
+                {
+                    var sendTo = new Options
+                    {
+                        IpAdrress = _fowardToSingConfig.Value.IpAddress,
+                        PortNumber = _fowardToSingConfig.Value.Port
+                    };
+
+                    this.SendTo(sendTo, rgpToFowardForSing);
+                    _logger.Information("REENCAMINHADO P/ SING: {message}", rgpToFowardForSing);
+
+
+                }
+                catch (System.Exception ex)
+                {
+                    var m = string.Format("ERRO AO ENVIAR PARA O SING: {0}", rgpToFowardForSing);
+                    _logger.Error(ex, m);
+
+                }
+            }
+
+           
         }
 
         protected override void SendAck(string message)

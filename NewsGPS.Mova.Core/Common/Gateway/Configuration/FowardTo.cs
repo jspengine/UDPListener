@@ -5,4 +5,13 @@
         public string IpAddress { get; set; }
         public int Port { get; set; }
     }
+
+    public class FowardToMova : FowardTo
+    {
+    }
+
+    public class FowardToSing : FowardTo
+    {
+    }
+
 }

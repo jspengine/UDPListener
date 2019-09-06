@@ -82,10 +82,21 @@ namespace NewsGPS.Mova.Core.Common.Gateway
                     {
                         _logger.Information("MENSAGEM RECEBIDA: {message}", message);
 
-                        SendAck(message);
 
-                        Forward(message);
-                        _logger.Information("REENCAMINHANDO P/ MOVA: {message} ", message);
+                        Task.Run(() => 
+                        {
+                            SendAck(message);
+                        });
+
+
+
+                        Task.Run(() =>
+                        {
+                            
+                            Forward(message);
+                            _logger.Information("REENCAMINHANDO P/ MOVA: {message} ", message);
+                        });
+                        
 
 
                         Task.Run(() =>
