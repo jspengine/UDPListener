@@ -10,15 +10,19 @@ namespace NewsGPS.Mova.Core.Common.Gateway
     {
         private ILogger _logger;
         private IOptions<Listener> _listenersConfig;
-        private IOptions<FowardTo> _fowardToConfig;
+        private IOptions<FowardToMova> _fowardToMovaConfig;
+        private IOptions<FowardToSing> _fowardToSingConfig;
+       
 
         public Gateway(ILogger logguer, 
             IOptions<Listener> listenersConfig,
-            IOptions<FowardTo> fowardToConfig)
+            IOptions<FowardToMova> fowardToMovaConfig,
+            IOptions<FowardToSing> fowardToSingConfig)
         {
             _logger = logguer;
             _listenersConfig = listenersConfig;
-            _fowardToConfig = fowardToConfig;
+            _fowardToMovaConfig = fowardToMovaConfig;
+            _fowardToSingConfig = fowardToSingConfig;
         }
 
         public void Run()
@@ -29,7 +33,7 @@ namespace NewsGPS.Mova.Core.Common.Gateway
             foreach (var port in listenersConfiguration.Ports)
             {
                 var ip = listenersConfiguration.IpAddress;
-                listeners.Add(new MovaGateway(_fowardToConfig, _logger, ip, port));
+                listeners.Add(new MovaGateway(_fowardToMovaConfig,_fowardToSingConfig, _logger, ip, port));
             }
 
 

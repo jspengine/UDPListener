@@ -41,7 +41,8 @@ namespace NewsGPS.Mova.Core.Common.IOC
            
             services.AddOptions();
             services.Configure<Listener>(configuration.GetSection("Listener"));
-            services.Configure<FowardTo>(configuration.GetSection("FowardTo"));
+            services.Configure<FowardToMova>(configuration.GetSection("FowardToMova"));
+            services.Configure<FowardToSing>(configuration.GetSection("FowardToSing"));
         }
 
 

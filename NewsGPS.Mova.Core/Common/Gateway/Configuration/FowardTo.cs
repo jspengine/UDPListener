@@ -7,7 +7,7 @@
     }
 
     public class FowardToMova : FowardTo
-    {
+    { 
     }
 
     public class FowardToSing : FowardTo
